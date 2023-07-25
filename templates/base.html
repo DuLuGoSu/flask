@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta name="description" content="" />
+    <meta name="author" content="" />
+    <title>TRAITORS LKL - Versión CASA RURAL</title>
+    <!-- Favicon-->
+    <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+    <!-- Core theme CSS (includes Bootstrap)-->
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles2.css') }}">
+    <style>
+        html,
+        body {
+            height: 95%;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        #page-content-wrapper {
+            flex: 1;
+        }
+
+        footer {
+            margin-top: auto;
+        }
+    </style>
+</head>
+
+<body>
+    {% if 'usuario' in session %}
+    <!-- Page content wrapper-->
+    <div id="page-content-wrapper">
+        <!-- Top navigation-->
+        <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+            <div class="container-fluid">
+                
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                    data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
+                    aria-expanded="false" aria-label="Toggle navigation"><span
+                        class="navbar-toggler-icon"></span></button>
+                <div class="navbar-text"> TRAITORS LKL - Versión CASA RURAL </div>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav ms-auto mt-2 mt-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('index') }}">Volver al inicio</a></li>
+                        <li class="nav-item"><a class="nav-link"
+                                href="{{ url_for('perfil_usuario', id_usuario=session['usuario']) }}">Tu perfil</a></li>
+                        <li class="nav-item"><a class="nav-link" href="#">Instrucciones</a></li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button"
+                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">Traitors</a>
+                            <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                                <a class="dropdown-item" href="{{ url_for('TRAITORS') }}">Ponerse a salvo</a>
+                                <a class="dropdown-item" href="{{ url_for('conocer_usuarios_en_casa') }}" onclick="return confirm('Se descontará 1 punto de tu cuenta. ¿Continuar?')">¿Quién está en casa?</a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ url_for('votaciones', id_usuario=session['usuario']) }}">Votación diaria / Historial de voto</a>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+        {% else %}
+        <!-- El usuario no ha iniciado sesión -->
+        {% endif %}
+        <!-- Page content-->
+        <div class="container-fluid">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+
+
+    <!-- Bootstrap core JS-->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Core theme JS-->
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            {% if 'usuario' not in session %}
+            {% else %}
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Volver al inicio</a>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary">Cerrar sesión</a>
+            {% endif %}
+        </div>
+    </footer>
+</body>
+
+</html>

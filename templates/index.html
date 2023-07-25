@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <br>
+    <h1 class="mt-4">TRAITORS LKL</h1>
+    <h1 class="mt-4">Versión CASA RURAL</h1>
+    <p class="mt-5" style="font-size: 35px;">Dia: {{dia_actual}}</p>
+
+    {% if 'usuario' not in session %}
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Iniciar sesión</a>
+        <a href="{{ url_for('signup') }}" class="btn btn-secondary">Registrarse</a>
+    {% else %}
+        
+    {% endif %}
+</div>
+{% endblock %}

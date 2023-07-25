@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Calendario</title>
+  <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <h1>Calendario de Eventos</h1>
+
+  <div class="calendar-container">
+    <!-- Aquí puedes mostrar el calendario -->
+  </div>
+
+  <h2>Agregar Evento</h2>
+  <form action="{{ url_for('guardar_evento') }}" method="post">
+    <label for="titulo">Título del evento:</label>
+    <input type="text" id="titulo" name="titulo" required>
+    <br>
+
+    <label for="descripcion">Descripción:</label>
+    <textarea id="descripcion" name="descripcion" required></textarea>
+    <br>
+
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha" name="fecha" required>
+    <br>
+
+    <input type="submit" value="Guardar Evento">
+  </form>
+</body>
+</html>

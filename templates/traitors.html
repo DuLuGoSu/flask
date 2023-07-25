@@ -1,0 +1,80 @@
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <br>
+    <h1 class="mt-4">¿Necesitas estar a salvo una noche?</h1>
+    {% if usuario_inscrito > 0 %}
+    {% if casa_protegida %}
+    <img src="{{ url_for('static', filename='images/casagreenlocked.png') }}" alt="CasaGreen" style="margin-left: 100px; width: 80px; height: 80px;">
+    <p><strong style="margin-top: 100px;">ESTAS INSCRITO EN LA CASA {{ usuario_inscrito }} Y ESTÁ PROTEGIDA</strong></p>
+    {% else %}
+    <img src="{{ url_for('static', filename='images/casagreenunlocked.png') }}" alt="CasaRed" style="margin-left: 100px; width: 80px; height: 80px;">
+    <p><strong style="margin-top: 100px">ESTAS INSCRITO EN LA CASA {{ usuario_inscrito }} PERO ESTÁ DESPROTEGIDA</strong></p>
+    <a href="#" class="btn btn-primary" onclick="mostrarAviso()">PROTEGER</a>
+    <div id="avisoModal" class="modal" style="display: none;">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Aviso</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    Se descontarán 5 puntos de su cuenta. ¿Desea continuar?
+                </div>
+                <div class="modal-footer">
+                    <a id="aceptarBtn" href="#" class="btn btn-primary">ACEPTAR</a>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="container">
+        <br>
+        <h1 class="mt-4">------------------------------</h1>
+        {% if not tupla_resultados[0] %}
+        <a href="{{ url_for('inscribirse_en_casa', casa=1) }}" style="text-decoration: none;" onclick="return confirm('Se descontará 2 punto de tu cuenta. ¿Continuar?')">
+            <img src="{{ url_for('static', filename='images/casagreen.png') }}" alt="CasaRed" style="margin-left: 50px; width: 80px; height: 80px;">
+            <strong style="margin-left: 20px;">CASA 1</strong>
+        </a>
+        {% else %}
+        <img src="{{ url_for('static', filename='images/casared.png') }}" alt="CasaGreen" style="margin-left: 50px; width: 80px; height: 80px;">
+        <strong style="margin-left: 20px;">CASA 1</strong>
+        {% endif %}
+    </div>
+
+    <div class="container">
+        {% if not tupla_resultados[1] %}
+        <a href="{{ url_for('inscribirse_en_casa', casa=2) }}" style="text-decoration: none;" onclick="return confirm('Se descontará 2 punto de tu cuenta. ¿Continuar?')">
+            <p></p>
+            <img src="{{ url_for('static', filename='images/casagreen.png') }}" alt="CasaRed" style="margin-left: 50px; width: 80px; height: 80px;">
+            <strong style="margin-left: 20px;">CASA 2</strong>
+        </a>
+        {% else %}
+        <p></p>
+        <img src="{{ url_for('static', filename='images/casared.png') }}" alt="CasaGreen" style="margin-left: 50px; width: 80px; height: 80px;">
+        <strong style="margin-left: 20px;">CASA 2</strong>
+        {% endif %}
+        <h1 class="mt-1">------------------------------</h1>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+    function mostrarAviso() {
+        $('#avisoModal').modal('show');  // Muestra el cuadro de diálogo modal
+
+        // Actualiza el enlace "ACEPTAR" con la URL correcta
+        var casa = "{{ usuario_inscrito }}";
+        var url = "{{ url_for('proteger_casa', casa=0) }}";
+        url = url.replace('0', casa);
+        document.getElementById("aceptarBtn").setAttribute("href", url);
+
+        return false;  // Evita que se siga el enlace del botón
+    }
+</script>
+{% endblock %}

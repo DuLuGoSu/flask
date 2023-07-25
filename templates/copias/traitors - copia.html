@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>TRAITORS LKL</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+</head>
+
+<body>
+    <div class="container">
+        <br>
+        <h1 class="mt-4">¿Necesitas estar a salvo una noche?</h1>
+        {% if usuario_inscrito > 0 %}
+        {% if casa_protegida %}
+        <img src="{{ url_for('static', filename='images/casagreenlocked.png') }}" alt="CasaGreen"
+            style="margin-left: 100px; width: 80px; height: 80px;">
+        <strong style="margin-left: 20px;">ESTAS INSCRITO EN LA CASA {{ usuario_inscrito }} Y ESTÁ PROTEGIDA</strong>
+
+        {% else %}
+        <img src="{{ url_for('static', filename='images/casagreenunlocked.png') }}" alt="CasaRed"
+            style="margin-left: 100px; width: 80px; height: 80px;">
+        <strong style="margin-left: 20px;">ESTAS INSCRITO EN LA CASA {{ usuario_inscrito }} PERO ESTÁ
+            DESPROTEGIDA</strong>
+        <a href="#" class="btn btn-primary" onclick="mostrarAviso()">PROTEGER</a>
+        <div id="avisoModal" class="modal" style="display: none;">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Aviso</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+                    <div class="modal-body">
+                        Se descontarán 5 puntos de su cuenta. ¿Desea continuar?
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">CANCELAR</button>
+                        <a id="aceptarBtn" href="#" class="btn btn-primary">ACEPTAR</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a href="{{ url_for('conocer_usuarios_en_casa') }}" class="btn btn-primary">CONOCER QUIÉN ESTÁ EN LA CASA (-1
+            PUNTO)</a>
+        {% endif %}
+        {% else %}
+        <div class="container">
+            <br>
+            <h1 class="mt-4">------------------------------</h1>
+            {% if not tupla_resultados[0] %}
+            <a href="{{ url_for('inscribirse_en_casa', casa=1) }}" style="text-decoration: none;">
+                <img src="{{ url_for('static', filename='images/casagreen.png') }}" alt="CasaRed"
+                    style="margin-left: 100px; width: 80px; height: 80px;">
+                <strong style="margin-left: 20px;">CASA 1</strong>
+            </a>
+            {% else %}
+            <img src="{{ url_for('static', filename='images/casared.png') }}" alt="CasaGreen"
+                style="margin-left: 100px; width: 80px; height: 80px;">
+            <strong style="margin-left: 20px;">CASA 1</strong>
+            {% endif %}
+        </div>
+
+        <div class="container">
+            {% if not tupla_resultados[1] %}
+            <a href="{{ url_for('inscribirse_en_casa', casa=2) }}" style="text-decoration: none;">
+                <img src="{{ url_for('static', filename='images/casagreen.png') }}" alt="CasaRed"
+                    style="margin-left: 100px; width: 80px; height: 80px;">
+                <strong style="margin-left: 20px;">CASA 2</strong>
+            </a>
+            {% else %}
+            <img src="{{ url_for('static', filename='images/casared.png') }}" alt="CasaGreen"
+                style="margin-left: 100px; width: 80px; height: 80px;">
+            <strong style="margin-left: 20px;">CASA 2</strong>
+            {% endif %}
+            <h1 class="mt-4">------------------------------</h1>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="container">
+        <a href="{{ url_for('logout') }}" class="btn btn-primary">Cerrar sesión</a>
+        <a href="{{ url_for('index') }}" class="btn btn-secondary">Volver al inicio</a>
+    </div>
+
+
+
+</body>
+<script>
+    function mostrarAviso() {
+        $('#avisoModal').modal('show');  // Muestra el cuadro de diálogo modal
+
+        // Actualiza el enlace "ACEPTAR" con la URL correcta
+        var casa = "{{ usuario_inscrito }}";
+        var url = "{{ url_for('proteger_casa', casa=0) }}";
+        url = url.replace('0', casa);
+        document.getElementById("aceptarBtn").setAttribute("href", url);
+
+        return false;  // Evita que se siga el enlace del botón
+    }
+</script>
+
+</html>

@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Usuarios en Casa 1</h1>
+{% if usuariosCasa1 %}
+    <ul>
+        {% for usuario in usuariosCasa1 %}
+            <li>{{ usuario[0] }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No hay usuarios en esta casa.</p>
+{% endif %}
+
+<h1>Usuarios en Casa 2</h1>
+{% if usuariosCasa2 %}
+    <ul>
+        {% for usuario in usuariosCasa2 %}
+            <li>{{ usuario[0] }}</li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <p>No hay usuarios en esta casa.</p>
+{% endif %}
+</div>
+{% endblock %}
