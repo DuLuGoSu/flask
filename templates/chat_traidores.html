@@ -34,11 +34,6 @@
 {% endif %}
 
 <h1>Chat de Traidores</h1>
-<div id="chat">
-    {% for mensaje, fecha_envio in mensajes %}
-        <p>{{ mensaje }} - {{ fecha_envio }}</p>
-    {% endfor %}
-</div>
 
 <form id="form-chat" action="/enviar_mensaje" method="post">
     <input type="text" name="mensaje" placeholder="Escribe tu mensaje...">

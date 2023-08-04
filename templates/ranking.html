@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Ranking de Usuarios</h1>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Nombre de Usuario</th>
+            <th>Puntos</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for usuario, puntos in usuarios_puntos %}
+        <tr>
+            <td>{{ usuario }}</td>
+            <td>{{ puntos }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

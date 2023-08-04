@@ -59,6 +59,7 @@
                                 <a class="dropdown-item" href="{{ url_for('conocer_usuarios_en_casa') }}" onclick="return confirm('Se descontará 1 punto de tu cuenta. ¿Continuar?')">¿Quién está en casa?</a>
                                 <div class="dropdown-divider"></div>
                                 <a class="dropdown-item" href="{{ url_for('votaciones', id_usuario=session['usuario']) }}">Votación diaria / Historial de voto</a>
+                                <a class="dropdown-item" href="{{ url_for('ranking')}}">Ranking de puntos</a>
                             </div>
                         </li>
                     </ul>

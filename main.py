@@ -20,11 +20,11 @@ app.jinja_env.filters['datetimeformat'] = datetimeformat
 
 
 db = psycopg2.connect(
-    host="localhost",
-    port=5432,
+    host="containers-us-west-142.railway.app",
+    port=5475,
     user="postgres",
-    password="1234",
-    database="Traitors"
+    password="xLeaeQCNnu6OV6ZA3nNE",
+    database="railway"
 )
 
 
@@ -87,7 +87,7 @@ def TRAITORS():
     for casa in casas:
         resultado = verificar_casa_llena(casa)
         resultados.append(resultado)
-
+    print(resultados)
     usuario_inscrito = verificar_inscripcion_casa()
     casa_protegida = False
     if usuario_inscrito > 0:
@@ -96,28 +96,57 @@ def TRAITORS():
     return render_template("traitors.html", tupla_resultados=tuple(resultados),  usuario_inscrito=usuario_inscrito, casa_protegida=casa_protegida, nombres_usuarios=obtener_nombres_usuarios())
 
 
+from flask import render_template
+
 @app.route('/conocer_usuarios_en_casa', methods=['GET'])
 def conocer_usuarios_en_casa():
+    if 'usuario' not in session:
+        return redirect(url_for("login"))
 
     cursor = db.cursor()
 
     usuario = session['usuario']
     valores_protected = (usuario,)
-    consulta_puntos = "UPDATE usuarios SET puntos = puntos - 1 WHERE id = %s"
+    consulta_puntos = "SELECT puntos FROM usuarios WHERE id = %s"
     cursor.execute(consulta_puntos, valores_protected)
+    puntos_usuario = cursor.fetchone()
 
-    consulta = "SELECT nombre_usuario FROM usuarios WHERE usuario_casa_inscrito = 1"
+    if puntos_usuario and puntos_usuario[0] >= 1:
+        # El usuario tiene al menos 1 punto, proceder a conocer usuarios en la casa
+        consulta_descuento_puntos = "UPDATE usuarios SET puntos = puntos - 1 WHERE id = %s"
+        cursor.execute(consulta_descuento_puntos, valores_protected)
+
+        consulta = "SELECT nombre_usuario FROM usuarios WHERE usuario_casa_inscrito = 1"
+        cursor.execute(consulta)
+        usuariosCasa1 = cursor.fetchall()
+
+        consulta = "SELECT nombre_usuario FROM usuarios WHERE usuario_casa_inscrito = 2"
+        cursor.execute(consulta)
+        usuariosCasa2 = cursor.fetchall()
+
+        db.commit()
+        cursor.close()
+
+        return render_template('usuariosencasa.html', usuariosCasa1=usuariosCasa1, usuariosCasa2=usuariosCasa2)
+    else:
+        # El usuario no tiene suficientes puntos, mostrar mensaje de error
+        error = "No tienes suficientes puntos para conocer usuarios en la casa. Necesitas al menos 1 punto."
+        return render_template("index.html", error=error)
+
+@app.route('/ranking', methods=['GET'])
+def ranking():
+    if 'usuario' not in session:
+        return redirect(url_for("login"))
+
+    cursor = db.cursor()
+    consulta = "SELECT nombre_usuario, puntos FROM usuarios WHERE nombre_usuario != 'admin' ORDER BY puntos DESC"
     cursor.execute(consulta)
-    usuariosCasa1 = cursor.fetchall()
-
-    consulta = "SELECT nombre_usuario FROM usuarios WHERE usuario_casa_inscrito = 2"
-    cursor.execute(consulta)
-    usuariosCasa2 = cursor.fetchall()
-
-    db.commit()
+    usuarios_puntos = cursor.fetchall()
     cursor.close()
 
-    return render_template('usuariosencasa.html', usuariosCasa1=usuariosCasa1, usuariosCasa2=usuariosCasa2)
+    return render_template('ranking.html', usuarios_puntos=usuarios_puntos)
+
+    
 
 
 def verificar_inscripcion_casa():
@@ -145,7 +174,7 @@ def verificar_casa_llena(casa):
     numero_casa = result[0]
 
     # Verificar si el número es mayor que 3
-    if numero_casa and numero_casa > 3:
+    if numero_casa and numero_casa > 1:
         return True
     else:
         return False
@@ -299,46 +328,59 @@ def pasar_dia():
 
     # Contabilizar los votos del día anterior
     jugador_salvado = contabilizar_votos(dia_actual)
+    print(jugador_salvado)
     consulta = "UPDATE usuarios SET traitor = FALSE WHERE id = %s"
     cursor.execute(consulta, (jugador_salvado,))
 
-    # Obtener el usuario con el número más alto de voto_traidores
-    consulta_max_votos = "SELECT id FROM usuarios ORDER BY voto_traidores DESC LIMIT 1"
+    # Obtener los usuarios con el número más alto de voto_traidores
+    consulta_max_votos = "SELECT id, voto_traidores FROM usuarios ORDER BY voto_traidores DESC"
     cursor.execute(consulta_max_votos)
-    resultado_max_votos = cursor.fetchone()
+    resultados_max_votos = cursor.fetchall()
 
-    if resultado_max_votos:
-        id_jugador_traitor = resultado_max_votos[0]
+    # Manejar el caso de empate
+    empate = False
+    if resultados_max_votos:
+        max_votos = resultados_max_votos[0][1]
+        jugadores_empatados = [result[0] for result in resultados_max_votos if result[1] == max_votos]
+        print(jugadores_empatados)
+        if len(jugadores_empatados) > 1:
+            empate = True
 
-        # Obtener el valor actual de la columna protected del jugador más votado
-        consulta_protected = "SELECT protected FROM usuarios WHERE id = %s"
-        cursor.execute(consulta_protected, (id_jugador_traitor,))
-        protected_jugador_max_votos = cursor.fetchone()[0]
+        if not empate:
+            id_jugador_traitor = resultados_max_votos[0][0]
+            # Obtener el valor actual de la columna protected del jugador más votado
+            consulta_protected = "SELECT protected FROM usuarios WHERE id = %s"
+            cursor.execute(consulta_protected, (id_jugador_traitor,))
+            protected_jugador_max_votos = cursor.fetchone()[0]
 
-        if not protected_jugador_max_votos:
-            # Si protected es False, asignar traitor = True
-            consulta_actualizar_traitor = "UPDATE usuarios SET traitor = TRUE WHERE id = %s"
-            cursor.execute(consulta_actualizar_traitor, (id_jugador_traitor,))
-
+            if not protected_jugador_max_votos:
+                # Si protected es False, asignar traitor = True
+                consulta_actualizar_traitor = "UPDATE usuarios SET traitor = TRUE WHERE id = %s"
+                cursor.execute(consulta_actualizar_traitor, (id_jugador_traitor,))
+    
+    # Resto del código...
 
     # Actualizar la tabla juego con el jugador sentenciado
-    consulta = "UPDATE juego SET jugador_sentenciado = %s WHERE dia = %s"
+    consulta_jugador_sentenciado = "UPDATE juego SET jugador_sentenciado = %s WHERE dia = %s"
     # valores = (jugador_sentenciado, dia_actual)
-    # cursor.execute(consulta, valores)
+    # cursor.execute(consulta_jugador_sentenciado, valores)
 
     # Sumar un número al valor de dia_actual
     nuevo_dia = dia_actual + 1
 
     # Actualizar el valor de dia_actual en la tabla dias_juego
-    consulta = "UPDATE dias_juego SET dia_actual = %s"
-    valores = (nuevo_dia,)
-    cursor.execute(consulta, valores)
-    consulta = "UPDATE usuarios SET protected = FALSE, voto_traidores = 0, traidor_ha_votado = FALSE, usuario_casa_inscrito = 0"
-    cursor.execute(consulta)
+    consulta_actualizar_dia_actual = "UPDATE dias_juego SET dia_actual = %s"
+    valores_dia_actual = (nuevo_dia,)
+    cursor.execute(consulta_actualizar_dia_actual, valores_dia_actual)
+
+    # Resetear valores, etc.
+    consulta_reset_valores = "UPDATE usuarios SET protected = FALSE, voto_traidores = 0, traidor_ha_votado = FALSE, usuario_casa_inscrito = 0"
+    cursor.execute(consulta_reset_valores)
 
     db.commit()
     cursor.close()
     return redirect(url_for("index"))
+
 
 
 def contabilizar_votos(dia):
@@ -355,10 +397,19 @@ def contabilizar_votos(dia):
         return None
 
     # Encontrar al jugador sentenciado con más votos
-    jugador_salvado = max(votos_por_jugador, key=lambda x: x[1])[0]
+    max_votos = max(votos_por_jugador, key=lambda x: x[1])
+    jugador_salvado = max_votos[0]
+    num_votos_max = max_votos[1]
+
+    # Verificar si hay empate
+    empates = [jugador for jugador, votos in votos_por_jugador if votos == num_votos_max]
+    if len(empates) > 1:
+        # Hay empate, devolver None o un valor especial para indicar el empate
+        return None
 
     cursor.close()
     return jugador_salvado
+
 
 
 def obtener_jugador_sentenciado(dia):
@@ -385,6 +436,8 @@ def actualizar_jugador_sentenciado(dia, jugador_sentenciado):
     cursor.close()
 
 
+from flask import render_template
+
 @app.route("/inscribirse_en_casa/<int:casa>")
 def inscribirse_en_casa(casa):
     if 'usuario' not in session:
@@ -392,30 +445,44 @@ def inscribirse_en_casa(casa):
 
     id_usuario = session['usuario']
     dia_actual = obtener_dia_actual()
+    print(dia_actual)
 
     if verificar_casa_llena(casa):
         return redirect(url_for("TRAITORS"))
 
-    consulta = f"UPDATE juego SET casa_{casa} = casa_{casa} + 1 WHERE dia = {dia_actual}"
-    consulta_proteger = "UPDATE usuarios SET usuario_casa_inscrito = %s WHERE id = %s"
-    valores_proteger = (casa, id_usuario)
-
+    # Verificar si el usuario tiene suficientes puntos (al menos 2 puntos) para inscribirse
     cursor = db.cursor()
-    consulta = f"SELECT casa_{casa}_protected FROM juego WHERE dia = {dia_actual}"
-    cursor.execute(consulta)
-    resultado = cursor.fetchone()
-    if resultado and resultado[0]:
-        consulta_proteger_usuario = "UPDATE usuarios SET protected = TRUE WHERE id = %s"
-        valores_proteger_usuario = (id_usuario,)
-        cursor.execute(consulta_proteger_usuario, valores_proteger_usuario)
-
-    cursor = db.cursor()
-    cursor.execute(consulta)
-    cursor.execute(consulta_proteger, valores_proteger)
-    db.commit()
+    consulta_puntos = "SELECT puntos FROM usuarios WHERE id = %s"
+    cursor.execute(consulta_puntos, (id_usuario,))
+    puntos_usuario = cursor.fetchone()
     cursor.close()
 
-    return redirect(url_for("TRAITORS"))
+    if puntos_usuario and puntos_usuario[0] >= 2:
+        # El usuario tiene suficientes puntos, proceder a inscribirse en la casa
+        consulta = f"UPDATE juego SET casa_{casa} = casa_{casa} + 1 WHERE dia = {dia_actual}"
+        consulta_proteger = "UPDATE usuarios SET usuario_casa_inscrito = %s, puntos = puntos - 2 WHERE id = %s"
+        valores_proteger = (casa, id_usuario)
+
+        cursor = db.cursor()
+        cursor.execute(consulta)
+        consulta = f"SELECT casa_{casa}_protected FROM juego WHERE dia = {dia_actual}"
+        cursor.execute(consulta)
+        resultado = cursor.fetchone()
+        if resultado and resultado[0]:
+            consulta_proteger_usuario = "UPDATE usuarios SET protected = TRUE WHERE id = %s"
+            valores_proteger_usuario = (id_usuario,)
+            cursor.execute(consulta_proteger_usuario, valores_proteger_usuario)
+
+        cursor.execute(consulta_proteger, valores_proteger)
+        db.commit()
+        cursor.close()
+
+        return redirect(url_for("TRAITORS"))
+    else:
+        # El usuario no tiene suficientes puntos, mostrar mensaje de error
+        error = "No tienes suficientes puntos para inscribirte en la casa. Necesitas al menos 2 puntos."
+        return render_template("index.html", error=error)
+
 
 
 @app.route('/proteger_casa/<int:casa>')
@@ -425,6 +492,17 @@ def proteger_casa(casa):
 
     cursor = db.cursor()
     usuario = session['usuario']
+
+    # Verificar si el usuario tiene suficientes puntos para proteger la casa
+    consulta_puntos = "SELECT puntos FROM usuarios WHERE id = %s"
+    cursor.execute(consulta_puntos, (usuario,))
+    puntos_usuario = cursor.fetchone()[0]
+
+    if puntos_usuario < 5:
+        error = "No tienes puntos suficientes para proteger la casa.Necesitas al menos 5 puntos."
+        return render_template("index.html", error=error)
+
+
     valores_protected = (usuario,)
 
     # Actualizar la columna 'protected' a True para todos los usuarios inscritos en la casa
@@ -434,7 +512,6 @@ def proteger_casa(casa):
     db.commit()
 
     # Descontar 5 puntos al usuario actual
-
     consulta_puntos = "UPDATE usuarios SET puntos = puntos - 5 WHERE id = %s"
     cursor.execute(consulta_puntos, valores_protected)
     db.commit()
@@ -448,6 +525,7 @@ def proteger_casa(casa):
     cursor.close()
 
     return redirect(url_for("TRAITORS"))
+
 
 
 def comprobar_votacion_previa():
@@ -521,7 +599,7 @@ def chat_traidores():
 
     # Obtener todos los mensajes del chat de la base de datos
     mensajes = obtener_mensajes_chat()
-    usuarios_no_traidores = obtener_usuarios_no_traidores()
+    usuarios_no_traidores = obtener_nombres_usuarios()
 
     # Obtener el valor de traidor_ha_votado del usuario actual
     # Suponiendo que la columna traidor_ha_votado está en la posición 5 de la consulta
@@ -559,6 +637,31 @@ def obtener_mensajes_chat():
     cursor.close()
     return mensajes
 
+@app.route("/qr_check/<string:ubicacion>")
+def qr_check(ubicacion):
+    # Conectarse a la base de datos
+    cursor = db.cursor()
+
+
+    # Verificar si la variable existe en la base de datos
+    consulta = "SELECT * FROM qr WHERE ubicacion = %s"
+    valores = (ubicacion,)
+    cursor.execute(consulta, valores)
+    resultado = cursor.fetchone()
+
+    if resultado:
+        # Si la variable existe, actualizar el valor a TRUE
+        consulta_actualizar = "UPDATE qr SET check_qr = TRUE WHERE ubicacion = %s"
+        cursor.execute(consulta_actualizar, valores)
+        db.commit()
+        cursor.close()
+        error = "UBICACIÓN LEIDA CON ÉXITO."
+        return render_template("index.html", error=error)
+    else:
+        cursor.close()
+        error = "LA UBICACIÓN NO EXISTE"
+        return render_template("index.html", error=error)
+
 
 def obtener_usuarios_no_traidores():
     # Realizar la conexión a la base de datos
@@ -572,7 +675,7 @@ def obtener_usuarios_no_traidores():
     print(usuarios_no_traidores)
     return usuarios_no_traidores
 
-
+    
 def obtener_id_usuario(nombre_usuario):
     cursor = db.cursor()
     consulta = "SELECT id FROM usuarios WHERE nombre_usuario = %s"
@@ -629,7 +732,6 @@ def obtener_nombre_jugador_por_id(id_usuario):
     else:
         return None
 
-
 def autenticar_usuario(nombre_usuario, contrasena):
     contrasena = contrasena.encode('utf-8')
     cursor = db.cursor()
@@ -664,5 +766,6 @@ def nombre_usuario_existe(nombre_usuario):
     return count > 0
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
