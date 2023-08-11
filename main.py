@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session
 import psycopg2
 import bcrypt
 import random
+import os
 
 
 app = Flask(__name__)
@@ -276,7 +277,7 @@ def iniciar_juego():
     consulta = """
         DELETE FROM juego;
         UPDATE dias_juego SET dia_actual = 1;
-        UPDATE usuarios SET puntos = 20, traitor = FALSE, protected = FALSE, usuario_casa_inscrito = 0, voto_traidores = 0, traidor_ha_votado = FALSE;
+        UPDATE usuarios SET puntos = 10, traitor = FALSE, protected = FALSE, usuario_casa_inscrito = 0, voto_traidores = 0, traidor_ha_votado = FALSE;
         """
     cursor.execute(consulta)
     db.commit()
@@ -329,8 +330,13 @@ def pasar_dia():
     # Contabilizar los votos del día anterior
     jugador_salvado = contabilizar_votos(dia_actual)
     print(jugador_salvado)
-    consulta = "UPDATE usuarios SET traitor = FALSE WHERE id = %s"
-    cursor.execute(consulta, (jugador_salvado,))
+    consulta_protected = "SELECT protected FROM usuarios WHERE id = %s"
+    cursor.execute(consulta_protected, (jugador_salvado,))
+    protected_jugador = cursor.fetchone()[0]
+    print(protected_jugador)
+    if not protected_jugador:
+        consulta = "UPDATE usuarios SET traitor = FALSE WHERE id = %s"
+        cursor.execute(consulta, (jugador_salvado,))
 
     # Obtener los usuarios con el número más alto de voto_traidores
     consulta_max_votos = "SELECT id, voto_traidores FROM usuarios ORDER BY voto_traidores DESC"
@@ -764,7 +770,6 @@ def nombre_usuario_existe(nombre_usuario):
     count = cursor.fetchone()[0]
     cursor.close()
     return count > 0
-
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
