@@ -204,6 +204,7 @@ def votaciones(id_usuario):
     usuario = obtener_usuario_por_id(id_usuario)
     nombres_usuarios = obtener_nombres_usuarios()
     votado = comprobar_votacion_previa()
+    dia = obtener_dia_actual() 
 
     # Obtener todas las votaciones de la base de datos, ordenadas por fecha
     votaciones = obtener_votaciones_ordenadas_por_fecha()
@@ -225,7 +226,7 @@ def votaciones(id_usuario):
         historial.append({'id_votacion': id_votacion, 'votante': votante,
                          'candidato': candidato, 'dia': dia_votado})
 
-    return render_template("votaciones.html", usuario=usuario, nombres_usuarios=nombres_usuarios, votado=votado, historial=historial)
+    return render_template("votaciones.html", usuario=usuario, nombres_usuarios=nombres_usuarios, votado=votado, historial=historial, dia_actual=dia)
 
 
 def obtener_votaciones_ordenadas_por_fecha():
